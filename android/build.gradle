@@ -2,13 +2,12 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
-    compileSdkVersion 26
-
-
+    compileSdkVersion 27
+    buildToolsVersion "27.0.3"
 
     defaultConfig {
         minSdkVersion 15
-        targetSdkVersion 26
+        targetSdkVersion 27
         versionCode 1
         versionName "1.0"
 
@@ -17,23 +16,45 @@ android {
     }
 
     buildTypes {
+        debug {
+            minifyEnabled false
+            versionNameSuffix "-dev"
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
 
+    libraryVariants.all { variant ->
+        File outDir = file("${rootDir}/out/${variant.buildType.name}")
+        if (!outDir.exists()) {
+            outDir.mkdirs()
+        }
+        variant.assemble.doLast {
+            variant.outputs.each { output ->
+                copy {
+                    from output.outputFile
+                    into outDir
+                    rename { fileName -> "${rootProject.name}-android.${android.defaultConfig.versionName}.${android.defaultConfig.versionCode}.aar" }
+                }
+            }
+        }
+    }
+}
+
+sourceSets {
+    main.java.srcDirs += 'src/main/kotlin'
+    androidTest.java.srcDirs += 'src/androidTest/kotlin'
+    test.java.srcDirs += 'src/test/kotlin'
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    implementation 'com.android.support:appcompat-v7:26.1.0'
+    implementation 'com.android.support:appcompat-v7:27.1.1'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-}
-repositories {
-    mavenCentral()
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }

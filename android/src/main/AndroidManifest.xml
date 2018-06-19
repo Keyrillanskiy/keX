@@ -1,2 +1,1 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.keyrillanskiy.keX.android" />
+<manifest package="com.keyrillanskiy.keX.android" />

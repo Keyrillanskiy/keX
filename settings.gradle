@@ -1,1 +1,3 @@
+rootProject.name = 'KeX'
+
 include ':android', ':sample', ':kotlin'
