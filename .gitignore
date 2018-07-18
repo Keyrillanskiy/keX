@@ -11,3 +11,6 @@
 sample/src/main/java/com/keyrillanskiy/keX/sample/hz.kt
 gradlew
 gradlew.bat
+out/release/KeX-android_0.1.aar
+out/debug/KeX-android_0.1.aar
+kotlin/src/KeX-kotlin-0.1.pom

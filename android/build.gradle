@@ -1,5 +1,7 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'maven-publish'
 
 android {
     compileSdkVersion 27
@@ -9,7 +11,7 @@ android {
         minSdkVersion 15
         targetSdkVersion 27
         versionCode 1
-        versionName "1.0"
+        versionName = KeXVersion
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
@@ -23,22 +25,6 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
-    }
-
-    libraryVariants.all { variant ->
-        File outDir = file("${rootDir}/out/${variant.buildType.name}")
-        if (!outDir.exists()) {
-            outDir.mkdirs()
-        }
-        variant.assemble.doLast {
-            variant.outputs.each { output ->
-                copy {
-                    from output.outputFile
-                    into outDir
-                    rename { fileName -> "${rootProject.name}-android.${android.defaultConfig.versionName}.${android.defaultConfig.versionCode}.aar" }
-                }
-            }
         }
     }
 }
@@ -57,4 +43,82 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+}
+
+def pomConfig = {
+    licenses {
+        license {
+            name "MIT License"
+            url "https://opensource.org/licenses/MIT"
+        }
+    }
+    developers {
+        developer {
+            id "keyrillanskiy"
+            name "Kirill Chirkin"
+        }
+    }
+    scm {
+        url bintrayUrl
+    }
+}
+
+publishing {
+    publications {
+        AndroidPublication(MavenPublication) {
+            artifact("$buildDir/outputs/aar/android-release.aar")
+            groupId 'com.github.keyrillanskiy'
+            artifactId 'android'
+            version KeXVersion
+
+            pom.withXml {
+                def root = asNode()
+                root.appendNode('name', 'KeX-android')
+                root.appendNode('description', 'KeX - keyrillanskiy\'s extensions for kotlin and android. The goal of KeX is to store the most useful extensions in one library.')
+                root.appendNode('url', bintrayUrl)
+                root.children().last() + pomConfig
+
+                def dependenciesNode = asNode().appendNode('dependencies')
+                configurations.implementation.allDependencies.each {
+                    if (it.name != 'unspecified') {
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        dependencyNode.appendNode('groupId', it.group)
+                        dependencyNode.appendNode('artifactId', it.name)
+                        dependencyNode.appendNode('version', it.version)
+                    }
+                }
+            }
+        }
+    }
+}
+
+bintray {
+    Properties properties = new Properties()
+    def propertiesFile = file("${rootDir}/local.properties")
+    if (propertiesFile.exists()) {
+        properties.load(new FileInputStream(propertiesFile))
+    }
+
+    user = properties['bintray.user']
+    key = properties['bintray.api_key']
+
+    publications = ['AndroidPublication']
+    publish = true
+//    override = true
+
+    pkg {
+        repo = 'maven'
+        name = 'KeX-android'
+        licenses = ['MIT']
+        vcsUrl = 'https://github.com/Keyrillanskiy/keX'
+        dryRun = false
+        publicDownloadNumbers = true
+
+        version {
+            name = KeXVersion
+            desc = 'alpha'
+            released = new Date()
+            vcsTag = KeXVersion
+        }
+    }
 }
